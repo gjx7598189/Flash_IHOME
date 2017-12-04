@@ -2,8 +2,12 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import redis
+from flask_wtf.csrf import CSRFProtect
 
 class Config(object):
+
+    SECRET_KEY = "ToPd1bzuQBXhj+eTinSv7cNtbrBNiA2mfb+NhooZNQ6F5CfxlqF0zdG0Knahfvd/"
+
 
     DEBUG = True
     # 数据库
@@ -23,9 +27,10 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 
 redis_store = redis.StrictRedis(host=Config.REDIS_HOST,port=Config.REDIS_PROT)
+# 集成CSRF保护
+csrf = CSRFProtect(app)
 
-
-@app.route('/index')
+@app.route('/index',methods=["GET","POST"])
 def index():
     redis_store.set('name','xiaohei')
     return 'index'
