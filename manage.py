@@ -7,8 +7,8 @@ class Config(object):
 
     DEBUG = True
     # 数据库
-    AlCHEMY_DATABASE_URL = "mysql://root:mysql@127.0.0.1:3306/ihome17"
-    SQLALCHEMY_TRACK_MODIFICATIONS = Flask
+    SQLALCHEMY_DATABASE_URI = "mysql://root:mysql@127.0.0.1:3306/ihome17"
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 app = Flask(__name__)
