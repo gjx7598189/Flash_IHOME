@@ -29,3 +29,9 @@ class ProductionConfig(Config):
     # 生产环境所需配置
     pass
 
+config = {
+    "developement":DevelopementConfig,
+    "production":ProductionConfig
+
+}
+
