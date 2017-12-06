@@ -8,6 +8,7 @@ import redis
 from flask_wtf.csrf import CSRFProtect
 from flask_session import Session
 from config import config
+from utils.commin import RegexConverter
 
 
 redis_store = None
@@ -43,8 +44,14 @@ def creat_name(creat_name):
     csrf.init_app(app)
     # 集成session
     Session(app)
+    # 将自定义转换器添加到路由映射中
+    app.url_map.converters["re"] = RegexConverter
+
     # 注册蓝图
     from ihome import api_v1_0
     app.register_blueprint(api_v1_0.api)
+
+    from ihome import web_html
+    app.register_blueprint(web_html.html)
 
     return app
