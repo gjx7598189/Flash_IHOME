@@ -4,6 +4,8 @@ from flask import session
 from flask_script import Manager
 from flask_migrate import Migrate,MigrateCommand
 from ihome import creat_name,db,redis_store
+from ihome import models
+
 
 # 通过传入不同的参数返回不同的app
 app = creat_name("developement")
