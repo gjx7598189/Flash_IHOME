@@ -13,11 +13,7 @@ Migrate(app,db)
 manage.add_command("db",MigrateCommand)
 
 
-@app.route('/index',methods=["GET","POST"])
-def index():
-    session["name"] = "xiaohua"
-    redis_store.set('name','xiaohei')
-    return 'index'
+
 
 
 if __name__ == '__main__':

@@ -29,4 +29,8 @@ def creat_name(creat_name):
     csrf.init_app(app)
     # 集成session
     Session(app)
+    # 注册蓝图
+    from ihome import api_v1_0
+    app.register_blueprint(api_v1_0.api)
+
     return app
