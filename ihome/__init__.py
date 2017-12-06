@@ -48,8 +48,8 @@ def creat_name(creat_name):
     app.url_map.converters["re"] = RegexConverter
 
     # 注册蓝图
-    from ihome import api_v1_0
-    app.register_blueprint(api_v1_0.api)
+    from ihome.api_v1_0 import api
+    app.register_blueprint(api,url_prefix="/api/v1.0")
 
     from ihome import web_html
     app.register_blueprint(web_html.html)
