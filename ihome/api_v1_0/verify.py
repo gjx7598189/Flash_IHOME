@@ -15,7 +15,6 @@ def get_image_code():
     2. 生成图片验证码
     3. 存储到redis中(key是图片编码，值是验证码的文字内容)
     4. 返回图片
-    :return:
     """
     # 1. 取到图片编码
     args = request.args
