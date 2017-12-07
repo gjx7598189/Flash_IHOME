@@ -20,7 +20,7 @@ def get_image_code():
     # 1. 取到图片编码
     args = request.args
     cur = args.get("cur")
-
+    pre = args.get("pre")
     # 如果用户没有传图片id的话，直接抛错
     if not cur:
         abort(403)
@@ -32,6 +32,8 @@ def get_image_code():
 
     # 3. 存储到redis中(key是图片编码，值是验证码的文字内容)
     try:
+        if pre:
+            redis_store.delete("ImageCode_" + pre)
         redis_store.set("ImageCode_"+cur, text, constants.IMAGE_CODE_REDIS_EXPIRES)
     except Exception as e:
         current_app.logger.error(e)
@@ -39,5 +41,6 @@ def get_image_code():
 
     # 4. 返回验证码图片
     respnose = make_response(image)
-    # TODO: 设置contentType
+    # 设置contentType
+    respnose.headers["Content-type"] = "image/jpg"
     return respnose
