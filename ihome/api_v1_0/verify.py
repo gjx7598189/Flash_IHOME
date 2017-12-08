@@ -9,6 +9,7 @@ from ihome.utils.captcha.captcha import captcha
 from ihome import redis_store
 from ihome import constants
 from ihome.utils.response_code import RET
+from ihome.models import User
 
 
 @api.route("/sms", methods=["POST"])
@@ -39,9 +40,22 @@ def send_sms():
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(erron=RET.DBERR, errmsg="获取验证码内容失败")
+    if not real_image_code:
+        return jsonify(erron=RET.NODATA,errmsg="验证码过期")
+
     # 对比图片验证码内容，如果对比成功
     if real_image_code.lower() != image_code.lower():
         return jsonify(erron=RET.DATAERR, errmsg="验证码不正确")
+    # 判断手机号是否已经注册，如果注册直接返回错误
+    try:
+        user = User.query.filter_by(mobile=mobile).first()
+
+    except Exception as e:
+        user = None
+        current_app.logger.error(e)
+    if user:
+        return jsonify(erron=RET.DATAEXIST,errmsg="数据已存在")
+
     # 发送短信验证码
     result = random.randint(0, 999999)
     sms_code = "%06d" % result
@@ -51,15 +65,15 @@ def send_sms():
     #     mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES / 60], "1")
     # if result == 0:
     #     return jsonify(erron=RET.THIRDERR, errmsg="发送验证码失败")
-    # # 保存验证码在redis中以便后续验证
-    # try:
-    #     redis_store.set(
-    #         "SMS_" + mobile,
-    #         sms_code,
-    #         constants.SMS_CODE_REDIS_EXPIRES)
-    # except Exception as e:
-    #     current_app.logger.error(e)
-    #     return jsonify(erron=RET.DBERR, errmsg="验证码失败")
+    # 保存验证码在redis中以便后续验证
+    try:
+        redis_store.set(
+            "SMS_" + mobile,
+            sms_code,
+            constants.SMS_CODE_REDIS_EXPIRES)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(erron=RET.DBERR, errmsg="验证码失败")
     # 发送成功
     return jsonify(erron=RET.OK, errmsg="发送成功")
 
