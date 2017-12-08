@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-#ihome所使用的所有模型
+# ihome所使用的所有模型
 
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -28,6 +28,16 @@ class User(BaseModel, db.Model):
     avatar_url = db.Column(db.String(128))  # 用户头像路径
     houses = db.relationship("House", backref="user")  # 用户发布的房屋
     orders = db.relationship("Order", backref="user")  # 用户下的订单
+
+    @property   # 将某个方法提生成某个属性
+    def password(self):
+        raise AttributeError("改属性不能访问")
+
+    @password.setter  # 标识下面的方法是指定属性的设置方法
+    def password(self, value):
+        # value 设置值的时候作为方法的参数传入
+        self.password_hash = generate_password_hash(value)
+        pass
 
 
 class Area(BaseModel, db.Model):

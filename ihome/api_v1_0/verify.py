@@ -40,25 +40,26 @@ def send_sms():
         current_app.logger.error(e)
         return jsonify(erron=RET.DBERR, errmsg="获取验证码内容失败")
     # 对比图片验证码内容，如果对比成功
-    if real_image_code != image_code:
+    if real_image_code.lower() != image_code.lower():
         return jsonify(erron=RET.DATAERR, errmsg="验证码不正确")
     # 发送短信验证码
     result = random.randint(0, 999999)
     sms_code = "%06d" % result
-    # 发送
-    result = CCP().send_template_sms(
-        mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES / 60], "1")
-    if result == 0:
-        return jsonify(erron=RET.THIRDERR, errmsg="发送验证码失败")
-    # 保存验证码在redis中以便后续验证
-    try:
-        redis_store.set(
-            "SMS_" + mobile,
-            sms_code,
-            constants.SMS_CODE_REDIS_EXPIRES)
-    except Exception as e:
-        current_app.logger.error(e)
-        return jsonify(erron=RET.DBERR, errmsg="验证码失败")
+    current_app.logger.debug("%s短信验证号"%sms_code)
+    # # 发送
+    # result = CCP().send_template_sms(
+    #     mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES / 60], "1")
+    # if result == 0:
+    #     return jsonify(erron=RET.THIRDERR, errmsg="发送验证码失败")
+    # # 保存验证码在redis中以便后续验证
+    # try:
+    #     redis_store.set(
+    #         "SMS_" + mobile,
+    #         sms_code,
+    #         constants.SMS_CODE_REDIS_EXPIRES)
+    # except Exception as e:
+    #     current_app.logger.error(e)
+    #     return jsonify(erron=RET.DBERR, errmsg="验证码失败")
     # 发送成功
     return jsonify(erron=RET.OK, errmsg="发送成功")
 

@@ -46,7 +46,43 @@ function sendSMSCode() {
         return;
     }
 
-    // TODO: 通过ajax方式向后端接口发送请求，让后端发送短信验证码
+    var params = {
+        "mobile":mobile,
+        "image_code":imageCode,
+        "image_code_id":imageCodeId,
+    }
+
+    // 通过ajax方式向后端接口发送请求，让后端发送短信验证码
+    $.ajax({
+        url:"/api/v1.0/sms",
+        type:"post",
+        contentType:"application/json",
+        headers:{
+            "X-CSRFToken":getCookie("csrf_token")
+        },
+        data:JSON.stringify(params),
+        success:function (resp) {
+            if(resp.errno == "0"){
+                //发送成功倒计时
+                var num = 10
+                var t = setInterval(function () {
+                    if (num == 1){
+                        clearInterval(t)
+                        $(".phonecode-a").html("获取验证码")
+                    }
+                    else {
+                        num -= 1
+                        $(".phonecode-a").html(num + "秒")
+                    }
+                }, 1000, 60)
+            }
+            else {
+                alert(resp.errmsg)
+            }
+        }
+
+
+    })
 }
 
 $(document).ready(function() {
