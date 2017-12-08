@@ -18,13 +18,13 @@ def login():
     if not all([mobile,password]):
         return jsonify(erron=RET.DATAERR,errmsg="数据不完整")
     try:
-        user = User.query.filter_by(mobile=mobile)
+        user = User.query.filter_by(mobile=mobile).first()
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(erron=RET.DATAERR,errmsg="查询数据失败")
     if not user:
         return jsonify(erron=RET.USERERR,errmsg="用户不存在")
-    if not user.check_password_hash(password):
+    if not user.check_password(password):
         return jsonify(erron=RET.PWDERR,errmsg="用户名或密码错误")
 
     # 保存登陆状态，并返回结果

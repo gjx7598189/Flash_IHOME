@@ -39,7 +39,7 @@ class User(BaseModel, db.Model):
         self.password_hash = generate_password_hash(value)
         pass
 
-    def check_password_hash(self,password):
+    def check_password(self,password):
         return check_password_hash(self.password_hash,password)
 
 
