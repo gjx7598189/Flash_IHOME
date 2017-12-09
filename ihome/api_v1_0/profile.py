@@ -56,3 +56,64 @@ def upload_avatar():
         errmsg="上传成功",
         data={
             "avatar_url": QINIU_DOMIN_PREFIX + key})
+
+
+@api.route("/user/name",methods=["POST"])
+def set_user_name():
+
+    # TODO 判断是否登陆
+    # 获取传入的名字的参数，并判空
+    # 取到当前登陆用户的ID并查询出对应的模型
+    # 更新模型
+    # 返回结果
+    data_dict = request.json
+    name = data_dict.get("name")
+    if not name:
+        return jsonify(erron=RET.PARAMERR,errmsg="参数不全")
+
+    # 取到当前登陆用户的ID并查询出对应的模型
+    user_id = session.get("user_id")
+
+    try:
+        user = User.query.get(user_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(erron=RET.DBERR,errmsg="查询数据失败")
+
+    if not user:
+        return jsonify(erron=RET.USERERR,errmsg="用户不存在")
+
+    # 更新模型
+    try:
+        user.name = name
+        db.session.commit()
+    except Exception as e:
+        db.session.rollBack()
+        current_app.logger.error(e)
+        return jsonify(erron=RET.DBERR,errmsg="用户保存失败")
+
+    # 返回结果
+    return jsonify(erron=RET.OK,errmsg="修改成功")
+
+@api.route("/user")
+def get_user_info():
+    # 判断用户是否登陆
+    # 查询数据
+    # 将用户模型指定的数据进行指定格式返回
+    user_id = session.get("user_id")
+    try:
+        user = User.query.get(user_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(erron=RET.DBERR,errmsg="查询数据失败")
+
+    if not user:
+        return jsonify(erron=RET.USERERR,errmsg="用户不存在")
+
+    resp_data = {
+        "user_id":user_id,
+        "avatar_url":QINIU_DOMIN_PREFIX + user.avatar_url,
+        "name":user.name
+    }
+
+    return jsonify(erron=RET.OK,errmsg="OK",data=resp_data)

@@ -12,11 +12,64 @@ function getCookie(name) {
 }
 
 $(document).ready(function () {
-    // TODO: 在页面加载完毕向后端查询用户的信息
+    // 在页面加载完毕向后端查询用户的信息
+    $.get("/api/v1.0/user",function (resp) {
+        if (resp.erron == "0"){
+            $("#user-avatar").attr("src",resp.data.avatar_url)
+            $("#user-name").val(resp.data.name)
+        }
+    })
+    //  管理上传用户头像表单的行为
+    $("#form-avatar").submit(function (e) {
+        //阻止默认上传
+        e.preventDefault()
 
-    // TODO: 管理上传用户头像表单的行为
+        //进行上传
+        $(this).ajaxSubmit({
+            url:"/api/v1.0/user/avatar",
+            type:"post",
+            contentType:"application/json",
+            headers:{
+                "X-CSRFToken":getCookie("csrf_token")
+            },
+            success:function (resp) {
+                if(resp.erron=="0"){
+                    $("#user-avatar").attr("src",resp.data.avatar_url)
+                }
+                else {
+                    alert(resp.errmsg)
+                }
+            }
+        })
 
-    // TODO: 管理用户名修改的逻辑
+    })
+    // 管理用户名修改的逻辑
+    $("#form-name").submit(function (e) {
+            e.preventDefault()
 
+            var name = $("#user-name").val()
+            if(!name){
+                alter("请输入昵称")
+                return
+            }
+            $.ajax({
+                url:"/api/v1.0/user/name",
+                type:"post",
+                contentType:"application/json",
+                headers:{
+                "X-CSRFToken":getCookie("csrf_token")
+            },
+                data:JSON.stringify({"name":name}),
+                success:function (resp) {
+                    if(resp.erron=="0"){
+                        $(".error-msg").hide()
+                        showSuccessMsg()
+                    }else {
+                        $(".error-msg").show()
+                    }
+                }
+            })
+
+        })
 })
 
