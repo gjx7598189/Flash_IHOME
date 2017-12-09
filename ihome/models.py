@@ -4,6 +4,7 @@
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from ihome import constants
+from .constants import QINIU_DOMIN_PREFIX
 from . import db
 
 
@@ -42,7 +43,14 @@ class User(BaseModel, db.Model):
     def check_password(self,password):
         return check_password_hash(self.password_hash,password)
 
-
+    def to_dict(self):
+        info_dict = {
+            "user_id": self.id,
+            "avatar_url": QINIU_DOMIN_PREFIX + self.avatar_url,
+            "mobile": self.mobile,
+            "name": self.name
+        }
+        return info_dict
 
 class Area(BaseModel, db.Model):
     """城区"""

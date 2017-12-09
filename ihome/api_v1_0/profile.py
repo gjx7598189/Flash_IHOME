@@ -6,13 +6,15 @@ from ihome.utils.response_code import RET
 from ihome.utils.storage_image import storage_image
 from ihome.constants import QINIU_DOMIN_PREFIX
 from ihome.models import User
+from ihome.utils.commin import login_required
 from ihome import db
 
 
 @api.route("/user/avatar", methods=["POST"])
+@login_required
 def upload_avatar():
 
-    # 判断用户是否登陆
+    # 使用装饰器来判断用户是否登陆@login_required
     # 获取上传的文件内容
     # 上传文件到七牛
     # 返回上传成功的图片地址
@@ -59,9 +61,10 @@ def upload_avatar():
 
 
 @api.route("/user/name",methods=["POST"])
+@login_required
 def set_user_name():
 
-    # TODO 判断是否登陆
+    # 使用装饰器来判断用户是否登陆@login_required
     # 获取传入的名字的参数，并判空
     # 取到当前登陆用户的ID并查询出对应的模型
     # 更新模型
@@ -91,13 +94,16 @@ def set_user_name():
         db.session.rollBack()
         current_app.logger.error(e)
         return jsonify(erron=RET.DBERR,errmsg="用户保存失败")
-
+    # 更新session中保存的用户名
+    session["name"] = name
     # 返回结果
     return jsonify(erron=RET.OK,errmsg="修改成功")
 
+
 @api.route("/user")
+@login_required
 def get_user_info():
-    # 判断用户是否登陆
+    # 使用装饰器来判断用户是否登陆@login_required
     # 查询数据
     # 将用户模型指定的数据进行指定格式返回
     user_id = session.get("user_id")
@@ -110,10 +116,5 @@ def get_user_info():
     if not user:
         return jsonify(erron=RET.USERERR,errmsg="用户不存在")
 
-    resp_data = {
-        "user_id":user_id,
-        "avatar_url":QINIU_DOMIN_PREFIX + user.avatar_url,
-        "name":user.name
-    }
-
-    return jsonify(erron=RET.OK,errmsg="OK",data=resp_data)
+    # resp_data =
+    return jsonify(erron=RET.OK,errmsg="OK",data=user.to_dict())

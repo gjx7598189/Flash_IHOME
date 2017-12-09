@@ -17,6 +17,8 @@ $(document).ready(function () {
         if (resp.erron == "0"){
             $("#user-avatar").attr("src",resp.data.avatar_url)
             $("#user-name").val(resp.data.name)
+        }else if(resp.erron=="4101"){
+            location.href = "/login.html"
         }
     })
     //  管理上传用户头像表单的行为
@@ -35,6 +37,9 @@ $(document).ready(function () {
             success:function (resp) {
                 if(resp.erron=="0"){
                     $("#user-avatar").attr("src",resp.data.avatar_url)
+                }
+                else if(resp.erron=="4101"){
+                    location.href = "/login.html"
                 }
                 else {
                     alert(resp.errmsg)
@@ -64,7 +69,10 @@ $(document).ready(function () {
                     if(resp.erron=="0"){
                         $(".error-msg").hide()
                         showSuccessMsg()
-                    }else {
+                    }else if(resp.erron=="4101"){
+                        location.href = "/login.html"
+                    }
+                    else {
                         $(".error-msg").show()
                     }
                 }
