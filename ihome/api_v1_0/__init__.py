@@ -4,6 +4,6 @@ from flask import Blueprint
 api = Blueprint("api",__name__)
 
 
-from . import verify,passport
+from . import verify,passport, profile
 
 

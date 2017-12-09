@@ -1,10 +1,8 @@
 # -*- coding:utf-8 -*-
 
 from . import api
-from flask import request, abort, current_app, jsonify, make_response, json,session
-from ihome.utils.captcha.captcha import captcha
+from flask import request, current_app, jsonify, session
 from ihome import redis_store,db
-from ihome import constants
 from ihome.models import User
 from ihome.utils.response_code import RET
 

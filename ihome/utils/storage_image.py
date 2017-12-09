@@ -20,7 +20,7 @@ def storage_image(data):
     #指定的存储名字
     token = q.upload_token(bucket_name)
     ret, info = put_data(token, None, data)
-
+    print ret,info
     if info.status_code != 200:
         raise Exception("七牛上传文件失败")
 
