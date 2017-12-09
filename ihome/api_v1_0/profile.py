@@ -1,13 +1,28 @@
 # -*- coding:utf-8 -*-
 
 from . import api
-from flask import request, current_app, jsonify,session
+from flask import request, current_app, jsonify,session,g
 from ihome.utils.response_code import RET
 from ihome.utils.storage_image import storage_image
 from ihome.constants import QINIU_DOMIN_PREFIX
 from ihome.models import User
 from ihome.utils.commin import login_required
 from ihome import db
+
+
+@api.route("/user/auth")
+@login_required
+def get_user_auth():
+    # 获取用户的实名认证信息
+    user_id = g.user_id
+    try:
+        user = User.query.get(user_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(erron=RET.DBERR,errmsg="查询用户失败")
+    if not user:
+        return jsonify(erron=RET.USERERR,errmsg="用户不存在")
+    return jsonify(erron=RET.OK,errmsg="OK",data=user.to_auth_dict())
 
 
 @api.route("/user/avatar", methods=["POST"])
@@ -75,8 +90,8 @@ def set_user_name():
         return jsonify(erron=RET.PARAMERR,errmsg="参数不全")
 
     # 取到当前登陆用户的ID并查询出对应的模型
-    user_id = session.get("user_id")
-
+    # user_id = session.get("user_id")
+    user_id = g.user_id
     try:
         user = User.query.get(user_id)
     except Exception as e:
@@ -106,7 +121,8 @@ def get_user_info():
     # 使用装饰器来判断用户是否登陆@login_required
     # 查询数据
     # 将用户模型指定的数据进行指定格式返回
-    user_id = session.get("user_id")
+    # user_id = session.get("user_id")
+    user_id = g.user_id
     try:
         user = User.query.get(user_id)
     except Exception as e:

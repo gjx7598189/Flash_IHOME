@@ -32,6 +32,18 @@ def login():
     return jsonify(erron=RET.OK,errmsg="登陆成功")
 
 
+# 退出登陆
+@api.route("/session",methods=["DELETE"])
+def logout():
+    # 清楚用户登陆信息
+    session.pop("name",None)
+    session.pop("mobile", None)
+    session.pop("user_id", None)
+    return jsonify(erron=RET.OK,errmsg="OK")
+
+
+
+
 @api.route("/users", methods=["POST"])
 def registe():
 

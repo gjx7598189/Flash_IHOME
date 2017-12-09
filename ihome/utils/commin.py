@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 from werkzeug.routing import BaseConverter
-from flask import session,jsonify
+from flask import session,jsonify,g
 from ihome.utils.response_code import RET
 import functools
 
@@ -24,6 +24,7 @@ def login_required(f):
         if not user_id:
             return jsonify(erron=RET.SESSIONERR,errmsg="用户未登陆")
         else:
+            g.user_id = user_id
             return f(*args,**kwargs)
 
     return wrapper
