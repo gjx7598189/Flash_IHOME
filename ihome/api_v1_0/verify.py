@@ -3,14 +3,13 @@
 import re
 import random
 from . import api
-from ihome.utils.sms import CCP
 from flask import request, abort, current_app, jsonify, make_response, json
 from ihome.utils.captcha.captcha import captcha
 from ihome import redis_store
 from ihome import constants
 from ihome.utils.response_code import RET
 from ihome.models import User
-
+from ihome.utils.sms import CCP
 
 @api.route("/sms", methods=["POST"])
 def send_sms():
@@ -60,11 +59,11 @@ def send_sms():
     result = random.randint(0, 999999)
     sms_code = "%06d" % result
     current_app.logger.debug("%s短信验证号"%sms_code)
-    # # 发送
-    # result = CCP().send_template_sms(
-    #     mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES / 60], "1")
-    # if result == 0:
-    #     return jsonify(erron=RET.THIRDERR, errmsg="发送验证码失败")
+    # 发送
+    result = CCP().send_template_sms(
+        mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES / 60], "1")
+    if result == 0:
+        return jsonify(erron=RET.THIRDERR, errmsg="发送验证码失败")
     # 保存验证码在redis中以便后续验证
     try:
         redis_store.set(
