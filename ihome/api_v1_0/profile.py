@@ -25,6 +25,39 @@ def get_user_auth():
     return jsonify(erron=RET.OK,errmsg="OK",data=user.to_auth_dict())
 
 
+@api.route("/user/auth",methods=["POST"])
+@login_required
+def set_user_auth():
+
+    # 保存用户的实名认证信息
+    dact_dict = request.json
+    real_name = dact_dict.get("real_name")
+    id_card = dact_dict.get("id_card")
+    if not all([real_name,id_card]):
+        return jsonify(erron=RET.DBERR,errmsg="参数不全")
+
+    # 获取当前的登陆用户，并设置数据
+    user_id = g.user_id
+    try:
+        user = User.query.get(user_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(erron=RET.DBERR,errmsg="查询用户失败")
+    if not user:
+        return jsonify(erron=RET.USERERR,errmsg="用户不存在")
+
+    # 保存用户认证信息
+    user.real_name = real_name
+    user.id_card = id_card
+    try:
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(erron=RET.DBERR,errmsg="保存数据失败")
+
+    return jsonify(erron=RET.OK,errmsg="保存认证信息成功")
+
+
 @api.route("/user/avatar", methods=["POST"])
 @login_required
 def upload_avatar():

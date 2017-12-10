@@ -59,6 +59,7 @@ class User(BaseModel, db.Model):
         }
         return auth_dict
 
+
 class Area(BaseModel, db.Model):
     """城区"""
 
