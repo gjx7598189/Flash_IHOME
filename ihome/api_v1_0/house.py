@@ -6,8 +6,48 @@ from . import api
 from ihome.utils.response_code import RET
 from ihome import redis_store,db
 from ihome.constants import AREA_INFO_REDIS_EXPIRES,QINIU_DOMIN_PREFIX,HOUSE_DETAIL_REDIS_EXPIRE_SECOND,HOME_PAGE_MAX_HOUSES,HOME_PAGE_DATA_REDIS_EXPIRES
+from ihome.constants import HOUSE_LIST_PAGE_CAPACITY
 from ihome.utils.commin import login_required
 from ihome.utils.storage_image import storage_image
+
+# 前端房源请求的信息
+# var params = {
+#         aid:areaId,
+#         sd:startDate,
+#         ed:endDate,
+#         sk:sortKey,
+#         p:next_page
+#     };
+
+
+@api.route("/houses")
+def search_house():
+    # 查询除出所有房源信息并返回
+    args = request.args
+    aid = args.get("aid","")
+    sd = args.get("sd","")
+    ed = args.get("ed","")
+    sk = args.get("sk","new")
+    p = args.get("p",1)
+
+    try:
+        house_query = House.query
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(erron=RET.DBERR,errmsg="查询房屋信息失败")
+
+    # 获取分页对象：参数1:第几页数据，参数2:每页加载几条数据，参数3:是否抛出错误
+    paginate = house_query.paginate(int(p),HOUSE_LIST_PAGE_CAPACITY,False)
+    # 取到当前页的所有对象
+    houses = paginate.items
+    # 记录总页数
+    total_page = paginate.pages
+
+    houses_dict =[]
+    for house in houses:
+        houses_dict.append(house.to_basic_dict())
+
+    return jsonify(erron=RET.OK,errmsg="OK",data={"houses":houses_dict,"total_page":total_page})
 
 
 @api.route("/houses/index")
