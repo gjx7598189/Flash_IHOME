@@ -61,20 +61,20 @@ $(document).ready(function(){
 
     // 获取筛选条件中的城市区域信息
     $.get("/api/v1.0/areas", function(data){
-        if ("0" == data.errno) {
+        if ("0" == data.erron) {
             var areaId = queryData["aid"];
             if (areaId) {
-                for (var i=0; i<data.data.length; i++) {
+                for (var i=0; i<data.data.areas.length; i++) {
                     areaId = parseInt(areaId);
-                    if (data.data[i].aid == areaId) {
-                        $(".filter-area").append('<li area-id="'+ data.data[i].aid+'" class="active">'+ data.data[i].aname+'</li>');
+                    if (data.data.areas[i].aid == areaId) {
+                        $(".filter-area").append('<li area-id="'+ data.data.areas[i].aid+'" class="active">'+ data.data.areas[i].aname+'</li>');
                     } else {
-                        $(".filter-area").append('<li area-id="'+ data.data[i].aid+'">'+ data.data[i].aname+'</li>');
+                        $(".filter-area").append('<li area-id="'+ data.data.areas[i].aid+'">'+ data.data.areas[i].aname+'</li>');
                     }
                 }
             } else {
-                for (var i=0; i<data.data.length; i++) {
-                    $(".filter-area").append('<li area-id="'+ data.data[i].aid+'">'+ data.data[i].aname+'</li>');
+                for (var i=0; i<data.data.areas.length; i++) {
+                    $(".filter-area").append('<li area-id="'+ data.data.areas[i].aid+'">'+ data.data.areas[i].aname+'</li>');
                 }
             }
             // 在页面添加好城区选项信息后，更新展示房屋列表信息

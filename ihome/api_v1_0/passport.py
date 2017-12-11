@@ -6,7 +6,17 @@ from ihome import redis_store,db
 from ihome.models import User
 from ihome.utils.response_code import RET
 
+# 判断用户是否登陆
+@api.route("/session")
+def check_user_login():
+    # 判断用户是否登陆，如果登陆返回用户的id，用户名
+    user_id = session.get("user_id")
+    name = session.get("name")
+    return jsonify(erron=RET.OK,errmsg="OK",data={"user_id":user_id,"name":name})
 
+
+
+# 用户登陆
 @api.route("/session",methods=["POST"])
 def login():
     # 获取参数
