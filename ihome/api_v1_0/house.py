@@ -36,6 +36,15 @@ def search_house():
         current_app.logger.error(e)
         return jsonify(erron=RET.DBERR,errmsg="查询房屋信息失败")
 
+    if sk == "booking":
+        house_query = House.query.order_by(House.order_count.desc())
+    elif sk == "price-inc":
+        house_query = House.query.order_by(House.price)
+    elif sk == "price-dex":
+        house_query = House.query.order_by(House.price.desc())
+    else:
+        house_query = House.query.order_by(House.create_time.desc())
+
     # 获取分页对象：参数1:第几页数据，参数2:每页加载几条数据，参数3:是否抛出错误
     paginate = house_query.paginate(int(p),HOUSE_LIST_PAGE_CAPACITY,False)
     # 取到当前页的所有对象
