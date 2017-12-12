@@ -60,10 +60,10 @@ def send_sms():
     sms_code = "%06d" % result
     current_app.logger.debug("%s短信验证号"%sms_code)
     # 发送
-    result = CCP().send_template_sms(
-        mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES / 60], "1")
-    if result == 0:
-        return jsonify(erron=RET.THIRDERR, errmsg="发送验证码失败")
+    # result = CCP().send_template_sms(
+    #     mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES / 60], "1")
+    # if result == 0:
+    #     return jsonify(erron=RET.THIRDERR, errmsg="发送验证码失败")
     # 保存验证码在redis中以便后续验证
     try:
         redis_store.set(

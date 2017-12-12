@@ -61,7 +61,6 @@ def search_house():
     except Exception as e:
         current_app.logger.error(e)
 
-
     try:
         house_query = House.query
     except Exception as e:
@@ -72,6 +71,7 @@ def search_house():
     if aid:
         # 添加过滤条件
         filters.append(House.area_id == aid)
+    print filters
     conflict_order = None
     if start_data and end_data:
         conflict_order = Order.query.filter(Order.begin_date<end_data,Order.end_date>start_data).all()
