@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 from flask import request,g,jsonify,current_app,session
-from ihome.models import Area,Facility,User,House,HouseImage
+from ihome.models import Area,Facility,User,House,HouseImage,Order
 from . import api
 from ihome.utils.response_code import RET
 from ihome import redis_store,db
@@ -9,6 +9,8 @@ from ihome.constants import AREA_INFO_REDIS_EXPIRES,QINIU_DOMIN_PREFIX,HOUSE_DET
 from ihome.constants import HOUSE_LIST_PAGE_CAPACITY
 from ihome.utils.commin import login_required
 from ihome.utils.storage_image import storage_image
+from ihome import constants
+import datetime
 
 # 前端房源请求的信息
 # var params = {
@@ -24,11 +26,41 @@ from ihome.utils.storage_image import storage_image
 def search_house():
     # 查询除出所有房源信息并返回
     args = request.args
+    # 区域ID
     aid = args.get("aid","")
-    sd = args.get("sd","")
-    ed = args.get("ed","")
+    # 用户过滤的开始入住日期和结束入住日期
+    start_data_str = args.get("sd","")
+    end_data_str = args.get("ed","")
     sk = args.get("sk","new")
-    p = args.get("p",1)
+    p = args.get("p","1")
+
+    # 判断参数
+    start_data = None
+    end_data = None
+    try:
+        if start_data_str:
+            start_data = datetime.datetime.strptime(start_data_str,"%Y-%m-%d")
+        if end_data_str:
+            end_data = datetime.datetime.strptime(end_data_str,"%Y-%m-%d")
+        if end_data and start_data:
+            assert start_data < end_data,Exception("开始时间不能大于结束时间")
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(erron=RET.PARAMERR,errmsg="参数有误")
+    try:
+        p = int(p)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(erron=RET.PARAMERR,errmsg="参数有误")
+    # 从redis中读取房屋信息
+    try:
+        redis_key = "house_list_%s_%s_%s_%s"%(aid,start_data_str,end_data_str,sk)
+        response_dict = redis_store.hget(redis_key,p)
+        if response_dict:
+            return jsonify(erron=RET.OK,errmsg="OK",data=eval(response_dict))
+    except Exception as e:
+        current_app.logger.error(e)
+
 
     try:
         house_query = House.query
@@ -36,14 +68,32 @@ def search_house():
         current_app.logger.error(e)
         return jsonify(erron=RET.DBERR,errmsg="查询房屋信息失败")
 
+    filters = []
+    if aid:
+        # 添加过滤条件
+        filters.append(House.area_id == aid)
+    conflict_order = None
+    if start_data and end_data:
+        conflict_order = Order.query.filter(Order.begin_date<end_data,Order.end_date>start_data).all()
+    elif start_data:
+        conflict_order = Order.query.filter(Order.end_date>start_data).all()
+    elif end_data:
+        conflict_order = Order.query.filter(Order.begin_date<end_data).all()
+
+    if conflict_order:
+        # 获取冲突房间的ID
+        conflict_house_ids = [order.house_id for order in conflict_order]
+        # 不包含冲突订单的房屋id的数据
+        filters.append(House.id.notin_(conflict_house_ids))
+    # 跟库不同排序方式去查询
     if sk == "booking":
-        house_query = House.query.order_by(House.order_count.desc())
+        house_query = house_query.filter(*filters).order_by(House.order_count.desc())
     elif sk == "price-inc":
-        house_query = House.query.order_by(House.price)
+        house_query = house_query.filter(*filters).order_by(House.price)
     elif sk == "price-dex":
-        house_query = House.query.order_by(House.price.desc())
+        house_query = house_query.filter(*filters).order_by(House.price.desc())
     else:
-        house_query = House.query.order_by(House.create_time.desc())
+        house_query = house_query.filter(*filters).order_by(House.create_time.desc())
 
     # 获取分页对象：参数1:第几页数据，参数2:每页加载几条数据，参数3:是否抛出错误
     paginate = house_query.paginate(int(p),HOUSE_LIST_PAGE_CAPACITY,False)
@@ -56,7 +106,25 @@ def search_house():
     for house in houses:
         houses_dict.append(house.to_basic_dict())
 
-    return jsonify(erron=RET.OK,errmsg="OK",data={"houses":houses_dict,"total_page":total_page})
+    response_dict = {"houses":houses_dict,"total_page":total_page}
+    # 保存房屋数据到redis中
+    if p <= total_page: # 当前页小于或等于总页数再去保存
+        try:
+            redis_key = "house_list_%s_%s_%s_%s"%(aid,start_data_str,end_data_str,sk)
+            # 获取管道操作
+            pipe = redis_store.pipeline()
+            # 开启事物
+            pipe.multi()
+            # 设置数据
+            pipe.hset(redis_key,p,response_dict)
+            # 设置过期时间
+            pipe.expire(redis_key,constants.HOUSE_LIST_REDIS_EXPIRES)
+            # 提交事物
+            pipe.execute()
+        except Exception as e:
+            current_app.logger.error(e)
+
+    return jsonify(erron=RET.OK,errmsg="OK",data=response_dict)
 
 
 @api.route("/houses/index")
@@ -124,7 +192,6 @@ def get_house_detail(house_id):
     redis_store.set("house_detail_%d"%house_id,house_dict,HOUSE_DETAIL_REDIS_EXPIRE_SECOND)
 
     return jsonify(erron=RET.OK,errmsg="OK",data={"user_id":user_id,"house":house_dict})
-
 
 
 @api.route("/houses/<int:house_id>/images",methods=["POST"])
@@ -291,3 +358,5 @@ def get_areas():
 
     # 数据返回
     return jsonify(erron=RET.OK,errmsg="OK",data={"areas":areas_array})
+
+

@@ -51,7 +51,11 @@ $(document).ready(function(){
     var queryData = decodeQuery();
     var houseId = queryData["hid"];
 
-    // TODO: 获取房屋的基本信息
+    // 获取房屋的基本信息
+
+
+
+
 
     // TODO: 订单提交
 })
