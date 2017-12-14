@@ -28,5 +28,31 @@ $(document).ready(function(){
             var orderId = $(this).parents("li").attr("order-id");
             $(".modal-comment").attr("order-id", orderId);
         });
+        $(".modal-comment").on("click",function () {
+            var orderId = $(".modal-comment").attr("order-id")
+            var comment = $("#comment").val()
+            if (!(orderId&&comment)){
+                alert("请输入内容")
+                return
+            }
+            $.ajax({
+                url:"/api/v1.0/orders/" + orderId + "/comment",
+                type:"PUT",
+                data:JSON.stringify({"comment":comment}),
+                contentType:"application/json",
+                headers:{
+                    "X-CSRFToken":getCookie("csrf_token")
+                },
+                success:function (resp) {
+                    if (resp.erron=="0"){
+                        $(".orders-list>li[order-id="+ orderId +"]>div.order-content>div.order-text>ul li:eq(4)>span").html("已完成");
+                        $("ul.orders-list>li[order-id="+ orderId +"]>div.order-title>div.order-operate").hide();
+                        $("#comment-modal").modal("hide");
+                    }else if(resp.erron=="4101"){
+                        location.href = "/login.html"
+                    }
+                }
+            })
+        })
     })
 });

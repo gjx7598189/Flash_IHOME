@@ -14,7 +14,7 @@ import datetime
 
 
 # 获取评论信息
-@api.route("/orders/<order_id>/cpmment",methods=["PUT"])
+@api.route("/orders/<order_id>/comment",methods=["PUT"])
 @login_required
 def comment_order(order_id):
     # 获取前端传过来的参数(comment评论的内容)
@@ -45,6 +45,12 @@ def comment_order(order_id):
         db.session.rollback()
         return jsonify(erron=RET.DBERR,errmsg="数据保存失败")
 
+    # 删除指定redis缓存
+    try:
+        house_id = order.house_id
+        redis_store.delete("house_detail_%d"%house_id)
+    except Exception as e:
+        current_app.logger.error(e)
     return jsonify(erron=RET.OK,errmsg="OK")
 
 
