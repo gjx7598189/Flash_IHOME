@@ -19,9 +19,9 @@ $(document).ready(function(){
     $(window).on('resize', centerModals);
 
     // 查询房客订单
-    $.get("/api/v1.0/orders",function (resp) {
+    $.get("/api/v1.0/user/orders?role=custom",function (resp) {
         if(resp.erron=="0"){
-            $(".orders-list").html(template("orders-list-tmpl"),{"orders":resp.data.orders})
+            $(".orders-list").html(template("orders-list-tmpl",{"orders":resp.data.orders}))
         }
         // 查询成功之后需要设置评论的相关处理
         $(".order-comment").on("click", function(){

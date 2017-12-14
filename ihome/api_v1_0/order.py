@@ -13,6 +13,61 @@ from ihome import constants
 import datetime
 
 
+@api.route("/orders/<order_id>/status",methods=["PUT"])
+@login_required
+def change_order_status(order_id):
+    # 更改订单的状态
+    # 获取订单号
+    # 获取订单号对应的订单模型
+    # 检验订单的房东是否使登录用户
+    # 修改订单状态:从待接单到待评论
+
+    # 1.获取当前登录的用户ｉｄ
+    user_id = g.user_id
+
+    # 获取当前的是接单还是拒接
+    action = request.json.get("action")
+    # 校验参数
+    if not action:
+        return jsonify(erron=RET.PARAMERR,errmsg="参数错误")
+    # action:accept/reject
+    if action not in ("accept","reject"):
+        return jsonify(erron=RET.PARAMERR,errmsg="参数错误")
+    # 2.获取订单号对应的订单模型
+    try:
+        order = Order.query.filter(Order.id == order_id,Order.status == "WAIT_ACCEPT").first()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(erron=RET.DBERR,errmsg="查询订单失败")
+
+    if not order:
+        return jsonify(erron=RET.NODATA,errmsg="订单不存在")
+    # 3.检验订单的房东是否使登录用户
+    if user_id != order.house.user_id:
+        return jsonify(erron=RET.DBERR,errmsg="参数错误")
+
+    # 4.修改订单状态:从待接单到待评论
+    if "accept" == action:
+        order.status = "WAIT_COMMENT"
+    elif "reject" == action:
+        order.status = "REJECTED"
+        # 获取拒单原因
+        reason = request.json.get("reason")
+        if not reason:
+            return jsonify(erron=RET.PARAMERR,errmsg="请填写据单原因")
+        # 保存据单原因
+        order.comment = reason
+    # 提交数据库
+    try:
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return jsonify(erron=RET.DBERR,errmsg="保存订单状态失败")
+
+    return jsonify(erron=RET.OK,errmsg="OK")
+
+
 @api.route("/orders",methods=["POST"])
 @login_required
 def add_order():
@@ -84,16 +139,30 @@ def add_order():
     return jsonify(erron=RET.OK,errmsg="OK")
 
 
-@api.route("/user/oders")
+@api.route("/user/orders")
 @login_required
 def get_user_orders():
     # 查询当前用户所有订单
     # 获取当前用户ID
 
+    # 获取当前用户ID
     user_id = g.user_id
+    role = request.args.get("role")
+    if not role:
+        return jsonify(erron=RET.PARAMERR,errmsg="参数错误")
+    if role not in ("custom","landlord"):
+        return jsonify(erron=RET.PARAMERR,errmsg="参数错误")
+
     # 查询当前用户所有订单
     try:
-        orders = Order.query.filter(Order.user_id==user_id).all()
+        if role == "custom":
+            orders = Order.query.filter(Order.user_id==user_id).order_by(Order.create_time.desc()).all()
+        elif role == "landlord":
+            houses = House.query.filter(House.user_id==user_id).all()
+            # 获取到自己所有的房屋ID
+            houses_id = [house.id for house in houses]
+            orders = Order.query.filter(Order.house_id.in_(houses_id)).order_by(Order.create_time.desc()).all()
+
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(erron=RET.DBERR,errmsg="查询数据失败")
