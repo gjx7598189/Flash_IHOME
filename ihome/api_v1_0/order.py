@@ -13,6 +13,41 @@ from ihome import constants
 import datetime
 
 
+# 获取评论信息
+@api.route("/orders/<order_id>/cpmment",methods=["PUT"])
+@login_required
+def comment_order(order_id):
+    # 获取前端传过来的参数(comment评论的内容)
+    # 通过id查询到指定的订单
+    # 给该订单设置评论/将订单的内容设置成"完成"
+    # 提交到数据库
+    # 返回数据
+    comment = request.json.get("comment")
+    if not comment:
+        return jsonify(erron=RET.PARAMERR,errmsg="参数错误")
+    try:
+        order = Order.query.filter(Order.id==order_id,Order.status=="WAIT_COMMENT").first()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(erron=RET.DBERR,errmsg="查询数据库失败")
+
+    if not order:
+        return jsonify(erron=RET.NODATA,errmsg="订单不存在")
+
+    # 给该订单设置评价/将订单的状态设置成"完成"
+    order.comment = comment
+    order.status = "COMPLETE"
+    # 提交到数据库
+    try:
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return jsonify(erron=RET.DBERR,errmsg="数据保存失败")
+
+    return jsonify(erron=RET.OK,errmsg="OK")
+
+
 @api.route("/orders/<order_id>/status",methods=["PUT"])
 @login_required
 def change_order_status(order_id):
